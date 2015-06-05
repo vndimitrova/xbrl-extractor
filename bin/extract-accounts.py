@@ -20,7 +20,7 @@ GAAP_FIELDS = [
 
 header_fields = []
 for gaap_field in GAAP_FIELDS:
-	header_fields += [ gaap_field + "_date", gaap_field + "_value" ]
+	header_fields += [ gaap_field + "_start_date", gaap_field + "_end_date", gaap_field + "_value" ]
 
 w = csv.writer(sys.stdout)
 w.writerow([
@@ -65,17 +65,28 @@ def extract_accounts(filepath, filetype):
 	else:
 		raise Exception("Unknown filetype: " + filetype)
 
-def get_instant(period):
+def get_dates(period):
+	if period is None:
+		return None, None
 	instant = period.find("{http://www.xbrl.org/2003/instance}instant")
 	if instant is not None:
-		return instant.text
+		v = instant.text
+		return (v, v)
 	else:
-		return None
+		start_date = period.find("{http://www.xbrl.org/2003/instance}startDate")
+		end_date = period.find("{http://www.xbrl.org/2003/instance}endDate")
+		if start_date is None or end_date is None:
+			return (None, None)
+		return (start_date.text, end_date.text)
 
 def get_contexts(x):
 	contexts = {}
 	for e in x.findall(".//{http://www.xbrl.org/2003/instance}context"):
-		contexts[e.get("id")] = e.find("./{http://www.xbrl.org/2003/instance}period")
+		if e.find("./{http://www.xbrl.org/2003/instance}entity/{http://www.xbrl.org/2003/instance}segment"):
+			# Ignore contexts that refer to a segment
+			contexts[e.get("id")] = None
+		else:
+			contexts[e.get("id")] = e.find("./{http://www.xbrl.org/2003/instance}period")
 	return contexts
 
 def get_value(e):
@@ -108,29 +119,29 @@ def get_gaap_value(x, namespaces_by_element, contexts, element_name):
 		prefix = namespaces_by_element[e].get("http://www.xbrl.org/uk/gaap/core/2009-09-01")
 		if prefix is not None and e.get("name") == prefix + ":" + element_name:
 			period = contexts[e.get("contextRef")]
-			instant = get_instant(period)
-			if instant:
-				all_values.append((instant, get_value(e)))
+			dates = get_dates(period)
+			if dates:
+				all_values.append((dates, get_value(e)))
 	
 	if not all_values:
-		return None, None
+		return None, None, None
 	else:
-		instant, value = max(all_values, key=lambda(instant,x): instant)
-		return instant, value
+		dates, value = max(all_values, key=lambda(dates,x): dates)
+		return dates + (value,)
 
 def get_gaap_value_xml(x, namespaces_by_element, contexts, element_name):
 	all_values = []
 	for e in x.findall(".//{http://www.xbrl.org/uk/fr/gaap/pt/2004-12-01}" + element_name):
 		period = contexts[e.get("contextRef")]
-		instant = get_instant(period)
-		if instant:
-			all_values.append((instant, get_value(e)))
+		dates = get_dates(period)
+		if dates:
+			all_values.append((dates, get_value(e)))
 	
 	if not all_values:
 		return None, None
 	else:
-		instant, value = max(all_values, key=lambda(instant,x): instant)
-		return instant, value
+		dates, value = max(all_values, key=lambda(dates,x): dates)
+		return dates + (value,)
 
 def extract_accounts_xml(filepath):
 	print >>sys.stderr, "Loading {}...".format(filepath)
@@ -140,7 +151,7 @@ def extract_accounts_xml(filepath):
 	
 	result = [ name ]
 	for gaap_field in GAAP_FIELDS:
-		result += get_gaap_value(x, namespaces_by_element, contexts, gaap_field)
+		result += get_gaap_value_xml(x, namespaces_by_element, contexts, gaap_field)
 	
 	return result
 
