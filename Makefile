@@ -24,7 +24,7 @@ data/Accounts_Bulk_Data-%: data/Accounts_Bulk_Data-%.zip
 	unzip -d "$@" "$<"
 
 data/Accounts_Monthly_Data-%: data/Accounts_Monthly_Data-%.zip
-	7z x -o "$@" "$<"
+	7z x -o"$@" "$<"
 
 # For debugging. E.g. `make print-daily_csv_files`
 print-%:
