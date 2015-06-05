@@ -21,7 +21,7 @@ data/Accounts_Monthly_Data-%.csv: data/Accounts_Monthly_Data-% bin/extract-accou
 	bin/extract-accounts.py "$<" > "$@"
 
 data/Accounts_Bulk_Data-%: data/Accounts_Bulk_Data-%.zip
-	unzip -o "$@" "$<"
+	unzip -d "$@" "$<"
 
 data/Accounts_Monthly_Data-%: data/Accounts_Monthly_Data-%.zip
 	7z x -o "$@" "$<"
