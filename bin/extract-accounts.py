@@ -9,14 +9,23 @@ import sys
 
 from xml.etree import cElementTree
 
+GAAP_FIELDS = [
+	"ProfitLossAccountReserve",
+	"TangibleFixedAssetsCostOrValuation",
+	"IntangibleFixedAssetsCostOrValuation",
+	"TurnoverGrossOperatingRevenue",
+	"CostSales",
+	"GrossProfitLoss",
+]
+
+header_fields = []
+for gaap_field in GAAP_FIELDS:
+	header_fields += [ gaap_field + "_date", gaap_field + "_value" ]
+
 w = csv.writer(sys.stdout)
 w.writerow([
-	"company_number", "balance_sheet_date",
-	"registered_name",
-	"ProfitLossAccountReserve_date", "ProfitLossAccountReserve_value",
-	"TangibleFixedAssetsCostOrValuation_date", "TangibleFixedAssetsCostOrValuation_value",
-	"IntangibleFixedAssetsCostOrValuation_date", "IntangibleFixedAssetsCostOrValuation_value",
-])
+	"company_number", "balance_sheet_date", "registered_name"
+	] + header_fields)
 
 def parse_nsmap(file):
 	namespaces_by_element = {}
@@ -87,16 +96,11 @@ def extract_accounts_inline(filepath):
 		if prefix is not None and e.get("name") == prefix + ":EntityCurrentLegalOrRegisteredName":
 			name = get_element_text(e)
 	
-	latest_plar_instant, latest_plar_value = get_gaap_value(x, namespaces_by_element, contexts, "ProfitLossAccountReserve")
-	latest_tangible_instant, latest_tangible_value = get_gaap_value(x, namespaces_by_element, contexts, "TangibleFixedAssetsCostOrValuation")
-	latest_intangible_instant, latest_intangible_value = get_gaap_value(x, namespaces_by_element, contexts, "IntangibleFixedAssetsCostOrValuation")
+	result = [ name ]
+	for gaap_field in GAAP_FIELDS:
+		result += get_gaap_value(x, namespaces_by_element, contexts, gaap_field)
 	
-	return [
-		name,
-		latest_plar_instant, latest_plar_value,
-		latest_tangible_instant, latest_tangible_value,
-		latest_intangible_instant, latest_intangible_value,
-	]
+	return result
 
 def get_gaap_value(x, namespaces_by_element, contexts, element_name):
 	all_values = []
@@ -134,16 +138,11 @@ def extract_accounts_xml(filepath):
 	contexts = get_contexts(x)
 	name = x.find(".//{http://www.xbrl.org/uk/fr/gcd/2004-12-01}EntityCurrentLegalName").text
 	
-	latest_plar_instant, latest_plar_value = get_gaap_value_xml(x, namespaces_by_element, contexts, "ProfitLossAccountReserve")
-	latest_tangible_instant, latest_tangible_value = get_gaap_value_xml(x, namespaces_by_element, contexts, "TangibleFixedAssetsCostOrValuation")
-	latest_intangible_instant, latest_intangible_value = get_gaap_value_xml(x, namespaces_by_element, contexts, "TangibleFixedAssetsCostOrValuation")
+	result = [ name ]
+	for gaap_field in GAAP_FIELDS:
+		result += get_gaap_value(x, namespaces_by_element, contexts, gaap_field)
 	
-	return [
-		name,
-		latest_plar_instant, latest_plar_value,
-		latest_tangible_instant, latest_tangible_value,
-		latest_intangible_instant, latest_intangible_value,
-	]
+	return result
 
 def writerow(row):
 	w.writerow([
