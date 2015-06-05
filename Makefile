@@ -5,7 +5,7 @@ monthly_csv_files=$(shell curl -L http://download.companieshouse.gov.uk/en_month
 accounts.csv.zip: accounts.csv
 	zip -o "$@" "$<"
 
-accounts.csv: $(daily_csv_files) $(monthly_csv_files)
+accounts.csv: $(monthly_csv_files)
 	( head -1 "$<" ; echo $^ | xargs -n 1 tail +2 ) > "$@"
 
 data/Accounts_Bulk_Data-%.zip:
