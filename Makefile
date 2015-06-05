@@ -17,11 +17,14 @@ data/Accounts_Monthly_Data-%.zip:
 data/Accounts_Bulk_Data-%.csv: data/Accounts_Bulk_Data-% bin/extract-accounts.py
 	bin/extract-accounts.py "$<" > "$@"
 
-data/Accounts_Monthly_Data-%.csv: data/Accounts_Bulk_Data-% bin/extract-accounts.py
+data/Accounts_Monthly_Data-%.csv: data/Accounts_Monthly_Data-% bin/extract-accounts.py
 	bin/extract-accounts.py "$<" > "$@"
 
 data/Accounts_Bulk_Data-%: data/Accounts_Bulk_Data-%.zip
 	unzip -o "$@" "$<"
+
+data/Accounts_Monthly_Data-%: data/Accounts_Monthly_Data-%.zip
+	7z x -o "$@" "$<"
 
 # For debugging. E.g. `make print-daily_csv_files`
 print-%:
