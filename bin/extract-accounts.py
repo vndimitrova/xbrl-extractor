@@ -16,6 +16,12 @@ GAAP_FIELDS = [
 	"TurnoverGrossOperatingRevenue",
 	"CostSales",
 	"GrossProfitLoss",
+    "OperatingProfitLoss",
+    "ProfitLossForPeriod",
+    "InterestPayableSimilarCharges",
+    "ProfitLossOnOrdinaryActivitiesBeforeTax",
+    "TotalRecognisedGainLossForPeriod",
+    "StaffCosts",
 ]
 
 header_fields = []
